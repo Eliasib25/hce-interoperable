@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hce-middleware-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hce-middleware
+  template:
+    metadata:
+      labels:
+        app: hce-middleware
+    spec:
+      containers:
+      - name: hce-middleware-container
+        image: middleware-citus:1.0 # Nombre de la imagen que crearemos
+        imagePullPolicy: Never    # Crucial para usar imágenes locales de Minikube
+        ports:
+        - containerPort: 8000

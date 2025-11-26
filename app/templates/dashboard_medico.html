@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Portal Médico - HCE</title>
+    <style>
+        /* --- ESTILOS COMPARTIDOS (Mismo Look & Feel del Paciente) --- */
+        :root {
+            --primary: #0d6efd;
+            --secondary: #6c757d;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --card-bg: #ffffff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0; padding: 0; color: var(--dark);
+        }
+
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 1000;
+        }
+
+        .navbar-brand { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+        .user-name { font-weight: 500; color: var(--secondary); margin-right: 15px;}
+        .btn-logout {
+            border: 1px solid #dc3545; color: #dc3545; padding: 6px 15px; border-radius: 20px;
+            text-decoration: none; font-size: 0.9rem; transition: 0.3s;
+        }
+        .btn-logout:hover { background-color: #dc3545; color: white; }
+
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+
+        /* GRID LAYOUT PARA MÉDICO */
+        .medical-grid {
+            display: grid;
+            grid-template-columns: 400px 1fr; /* Izquierda fija, Derecha flexible */
+            gap: 25px;
+            align-items: start;
+        }
+
+        /* TARJETAS */
+        .card {
+            background: white; border-radius: 12px; padding: 25px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px;
+        }
+        
+        .card h3 { margin-top: 0; color: var(--primary); border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; }
+
+        /* FORMULARIOS */
+        .form-group { margin-bottom: 15px; }
+        .form-control {
+            width: 100%; padding: 10px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box;
+        }
+        .btn-primary {
+            background-color: var(--primary); color: white; border: none; width: 100%;
+            padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold;
+        }
+        .btn-search { width: auto; display: inline-block; }
+
+        /* TIMELINE (ANTECEDENTES) */
+        .timeline { position: relative; padding-left: 20px; }
+        .timeline::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #dfe6ed;
+        }
+        .timeline-item { position: relative; margin-bottom: 20px; }
+        .timeline-dot {
+            position: absolute; left: -26px; top: 5px; width: 15px; height: 15px;
+            background: var(--primary); border: 3px solid white; border-radius: 50%; box-shadow: 0 0 0 2px var(--primary);
+        }
+        .history-card {
+            background: #f8f9fa; border-radius: 8px; padding: 15px; border: 1px solid #eee;
+        }
+        .history-date { font-size: 0.8rem; color: #666; font-weight: bold; }
+        .history-diag { color: var(--primary); font-weight: bold; font-size: 1.1em; }
+        .vital-tag { 
+            display: inline-block; background: #e2e3e5; padding: 2px 8px; 
+            border-radius: 4px; font-size: 0.85em; margin-right: 5px; margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">🩺 Portal Médico</div>
+        <div>
+            <span class="user-name">Dr. {{ user.nombres }} {{ user.apellidos }} ({{ user.sede.ciudad }})</span>
+            <a href="/logout" class="btn-logout">Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        {% if msg %}
+        <div style="background: #d1e7dd; color: #0f5132; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+            {{ msg }}
+        </div>
+        {% endif %}
+
+        <div class="card" style="display: flex; gap: 10px; align-items: center; background: #e7f1ff;">
+            <form action="/medico/buscar_paciente" method="get" style="display: flex; gap: 10px; width: 100%;">
+                <label style="align-self: center; font-weight: bold;">🔍 Buscar Paciente:</label>
+                <input type="text" name="q_doc" class="form-control" placeholder="Número de Documento (Ej: 3003)" value="{{ paciente_actual.numero_documento if paciente_actual else '' }}" required>
+                <button type="submit" class="btn-primary btn-search">Cargar Historia</button>
+            </form>
+        </div>
+
+        <div class="medical-grid">
+            
+            <div class="card">
+                <h3>📝 Registrar Atención</h3>
+                <form action="/medico/registrar" method="post">
+    
+                    <div class="form-group">
+                        <label>Documento Paciente:</label>
+                        <input type="text" name="paciente_doc" class="form-control" value="{{ paciente_actual.numero_documento if paciente_actual else '' }}" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Diagnóstico Principal (CIE-10):</label>
+                        <input type="text" name="diagnostico" class="form-control" placeholder="Ej: Rinofaringitis Aguda" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Tratamiento / Plan:</label>
+                        <textarea name="tratamiento" class="form-control" rows="2" placeholder="Ej: Acetaminofén 500mg..." required></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Observaciones / Notas de Evolución:</label>
+                        <textarea name="observaciones_generales" class="form-control" rows="2" placeholder="Ej: Paciente refiere mejoría, se recomienda reposo..."></textarea>
+                    </div>
+                    <hr>
+                    <h4 style="margin-bottom: 10px; color: #555;">Signos Vitales</h4>
+
+                    <div class="form-group">
+                        <label>Tipo:</label>
+                        <select name="obs_desc" class="form-control">
+                            <option value="Frecuencia Cardiaca">Frecuencia Cardiaca</option>
+                            <option value="Temperatura Corporal">Temperatura Corporal</option>
+                            <option value="Saturación de Oxígeno">Saturación de Oxígeno</option>
+                            <option value="Presión Arterial">Presión Arterial</option>
+                        </select>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <div class="form-group" style="flex:1;">
+                            <label>Valor:</label>
+                            <input type="text" name="obs_valor" class="form-control" placeholder="Ej: 37.5">
+                        </div>
+                        <div class="form-group" style="flex:1;">
+                            <label>Unidad:</label>
+                            <input type="text" name="obs_unidad" class="form-control" placeholder="Ej: C">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-primary">Guardar e Interoperar (FHIR)</button>
+                </form>
+            </div>
+
+            <div>
+                {% if paciente_actual %}
+                    <div class="card">
+                        <h3>🕒 Visualización cronológica de historia Clínica: {{ paciente_actual.nombres }} {{ paciente_actual.apellidos }}</h3>
+                        
+                        <div class="timeline">
+                            {% for visita in historial_clinico %}
+                            <div class="timeline-item">
+                                <div class="timeline-dot"></div>
+                                <div class="history-card">
+                                    <div class="history-date">{{ visita.fecha }}</div>
+                                    <div class="history-diag">{{ visita.diagnostico }}</div>
+                                    
+                                    {% if visita.signos_vitales %}
+                                    <div style="margin-top: 8px;">
+                                        {% for signo in visita.signos_vitales %}
+                                            <span class="vital-tag">💓 {{ signo }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% else %}
+                            <p style="text-align: center; color: #888;">El paciente no tiene atenciones previas registradas en FHIR.</p>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="card" style="text-align: center; padding: 50px; color: #aaa;">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">🩺</div>
+                        <h3>Módulo de Consulta</h3>
+                        <p>Ingrese el documento del paciente arriba para visualizar sus antecedentes cronológicos.</p>
+                        
+                    </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

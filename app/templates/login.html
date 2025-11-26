@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - HCE Interoperable</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="login-container">
+    <h2 class="header-clinico">HCE Interoperable</h2>
+    <p style="text-align: center; color: #666;">Acceso Seguro Unificado</p>
+
+    {% if error %}
+    <div style="background-color: #f8d7da; color: #721c24; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form action="/login" method="post">
+        <label for="username">Documento de Identidad:</label>
+        <input type="text" id="username" name="username" class="form-control" required placeholder="Ej: 1001">
+
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password" name="password" class="form-control" required>
+
+        <button type="submit" class="btn-primary">Ingresar</button>
+    </form>
+    
+    <div style="margin-top: 20px; font-size: 0.8em; color: #888; text-align: center;">
+        <p>Credenciales Demo:</p>
+        <p>Admin: 1001 | Medico: 2002 | Paciente: 3003</p>
+        <p>Pass: 12345</p>
+    </div>
+</div>
+
+</body>
+</html>

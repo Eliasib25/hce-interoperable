@@ -1,0 +1,60 @@
+
+services:
+  # Base de Datos: PostgreSQL + Citus
+  db_citus:
+    image: citusdata/citus:latest
+    container_name: hce_citus
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: hce_db
+    volumes:
+      - citus_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Servidor de Interoperabilidad: HAPI FHIR JPA Server
+  hapifhir:
+    image: hapiproject/hapi:v6.8.0
+    container_name: hce_hapi_fhir
+    ports:
+      - "8080:8080"
+    environment:
+      # Configuración básica para desarrollo (H2 db en memoria por defecto en esta imagen)
+      hapi.fhir.allow_multiple_delete: "true"
+      hapi.fhir.allow_external_references: "true"
+    depends_on:
+      - db_citus
+    
+
+  # Aplicación FastAPI
+  app:
+    build:
+      context: .
+      dockerfile: dockerfile
+    container_name: hce_app
+    ports:
+      - "8000:8000"
+    environment:
+      # La app se conectará al servicio 'db_citus' dentro de la red de Docker
+      DATABASE_URL: "postgresql://postgres:password123@db_citus:5432/hce_db"
+      # Configuración del servidor FHIR (nombre del servicio en Docker, no localhost)
+      FHIR_HOST: "hapifhir"
+      FHIR_PORT: "8080"
+    depends_on:
+      db_citus:
+        condition: service_healthy
+      hapifhir:
+        condition: service_started
+    
+    # Si necesitas montar recursos estáticos o plantillas desde el host, agrega volúmenes aquí
+    # volumes:
+    #   - ./app:/app/app:ro
+
+volumes:
+  citus_data:

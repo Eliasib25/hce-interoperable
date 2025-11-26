@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Historia Clínica - {{ user.nombres }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 2cm;
+        }
+        body {
+            font-family: 'Helvetica', sans-serif;
+            font-size: 12px;
+            color: #333;
+            line-height: 1.5;
+        }
+        .header {
+            border-bottom: 2px solid #0056b3;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex; /* Nota: WeasyPrint soporta Flexbox básico */
+            justify-content: space-between;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0056b3;
+        }
+        .meta {
+            text-align: right;
+            font-size: 10px;
+            color: #666;
+        }
+        h2 {
+            background-color: #f0f8ff;
+            padding: 5px 10px;
+            border-left: 5px solid #0056b3;
+            color: #0056b3;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #0056b3;
+            color: white;
+            font-weight: bold;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 9px;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">HCE Interoperable</div>
+        <div class="meta">
+            Fecha de Generación: {{ today }}<br>
+            ID Documento: {{ user.numero_documento }}
+        </div>
+    </div>
+
+    <h2>1. Información del Paciente</h2>
+    <table>
+        <tr>
+            <th width="20%">Nombre Completo</th>
+            <td>{{ user.nombres }} {{ user.apellidos }}</td>
+            <th width="20%">Documento</th>
+            <td>{{ user.tipo_documento.prefijo }} {{ user.numero_documento }}</td>
+        </tr>
+        <tr>
+            <th>Fecha Nacimiento</th>
+            <td>{{ user.fecha_nacimiento }}</td>
+            <th>Género</th>
+            <td>{{ user.genero }}</td>
+        </tr>
+        <tr>
+            <th>Email</th>
+            <td>{{ user.email }}</td>
+            <th>Sede Registro</th>
+            <td>{{ user.sede.ciudad }}</td>
+        </tr>
+    </table>
+
+    <h2>2. Historial Clínico Unificado (FHIR)</h2>
+    <p style="font-size: 10px; font-style: italic;">
+        Los siguientes datos han sido recuperados y normalizados desde el servidor de interoperabilidad HAPI FHIR.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Concepto (LOINC/SNOMED)</th>
+                <th>Resultado</th>
+                <th>Unidad</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for obs in historial_paciente %}
+            <tr>
+                <td>{{ obs.fecha }}</td>
+                <td>{{ obs.tipo }}</td>
+                <td style="font-weight: bold;">{{ obs.valor }}</td>
+                <td>{{ obs.unidad }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 20px;">
+                    No se encontraron registros clínicos disponibles.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Este documento es un extracto de la Historia Clínica Electrónica. 
+        La información aquí contenida es confidencial y está protegida por leyes de privacidad de datos.
+    </div>
+
+</body>
+</html>

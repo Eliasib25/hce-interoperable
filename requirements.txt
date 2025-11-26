@@ -1,0 +1,26 @@
+# Framework Web y Servidor
+fastapi
+uvicorn[standard]
+python-multipart  # Para formularios HTML
+
+# Base de datos
+sqlalchemy
+psycopg2-binary   # Driver para PostgreSQL/Citus
+
+# Plantillas Frontend
+jinja2
+
+# Seguridad (OAuth2 + JWT)
+python-jose[cryptography]
+passlib[bcrypt]
+bcrypt>=4.0.0,<5.0.0  # Fijar versión compatible con passlib
+
+# Peticiones HTTP (Para conectar con HAPI FHIR)
+requests
+
+# PDF
+weasyprint
+xhtml2pdf
+
+# Manejo de recursos FHIR en Python (Opcional pero útil)
+fhir.resources

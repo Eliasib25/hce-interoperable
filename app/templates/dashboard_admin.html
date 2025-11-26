@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Admisiones - HCE</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .search-bar { display: flex; gap: 10px; background: #e9ecef; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .id-card { border: 2px solid #0d6efd; background: #f8f9fa; padding: 15px; text-align: center; border-radius: 10px; }
+        .id-badge { background: #0d6efd; color: white; padding: 5px 10px; border-radius: 15px; font-size: 0.8em; }
+        .label { font-weight: bold; font-size: 0.9em; color: #666; display: block; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="header-clinico">
+        <h1>Gestión de Admisiones</h1>
+        <p>Usuario: {{ user.nombres }} ({{ user.sede.ciudad }})</p>
+        <a href="/logout" class="btn-primary" style="width: auto; padding: 5px 20px; text-decoration: none;">Cerrar Sesión</a>
+    </div>
+
+    <div style="max-width: 1100px; margin: 0 auto; padding: 10px;">
+        
+        {% if msg %}
+        <div style="background-color: #d1e7dd; color: #0f5132; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+            {{ msg }}
+        </div>
+        {% endif %}
+
+        <div class="search-bar">
+            <div style="flex-grow: 1;">
+                <form action="/admision/buscar" method="get" style="display: flex; gap: 10px; align-items: center;">
+                    <label><strong>Buscar Paciente (Documento):</strong></label>
+                    <input type="text" name="q_doc" class="form-control" placeholder="Ej: 3003" style="margin-bottom: 0;" required>
+                    <button type="submit" class="btn-primary" style="width: 150px;">🔍 Buscar</button>
+                </form>
+            </div>
+            <a href="/dashboard" class="btn-primary" style="width: 150px; background-color: #6c757d; text-decoration: none; text-align: center; line-height: 2.5;">Limpiar / Nuevo</a>
+        </div>
+
+        {% if paciente_encontrado %}
+        <div class="grid-layout">
+            
+            <div class="card">
+                <h3>✏️ Actualización de Datos Personales</h3>
+                <form action="/admision/actualizar" method="post">
+                    <input type="hidden" name="user_id" value="{{ paciente_encontrado.id }}">
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label>Nombres:</label>
+                            <input type="text" name="nombres" value="{{ paciente_encontrado.nombres }}" class="form-control" required>
+                        </div>
+                        <div>
+                            <label>Apellidos:</label>
+                            <input type="text" name="apellidos" value="{{ paciente_encontrado.apellidos }}" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <label>Email:</label>
+                    <input type="email" name="email" value="{{ paciente_encontrado.email or '' }}" class="form-control">
+
+                    <label>Teléfono:</label>
+                    <input type="text" name="telefono" value="{{ paciente_encontrado.telefono or '' }}" class="form-control">
+                    
+                    <button type="submit" class="btn-primary" style="margin-top: 15px;">Guardar Cambios y Sincronizar (FHIR)</button>
+                </form>
+            </div>
+
+            <div class="card">
+                <h3>🆔 Identificadores Clínicos</h3>
+                <p>Generación de IDs únicos del sistema.</p>
+                
+                <div class="id-card">
+                    <h4>{{ paciente_encontrado.nombres }} {{ paciente_encontrado.apellidos }}</h4>
+                    <p>{{ paciente_encontrado.tipo_documento.prefijo }} - {{ paciente_encontrado.numero_documento }}</p>
+                    <hr>
+                    <span class="label">ID Interno (SQL Citus):</span>
+                    <code>{{ paciente_encontrado.id }}</code>
+                    
+                    <span class="label">Identificador FHIR (Interoperabilidad):</span>
+                    <span class="id-badge">pac-{{ paciente_encontrado.numero_documento }}</span>
+
+                    <span class="label">Sede Origen:</span>
+                    <span>{{ paciente_encontrado.sede.nombre }} ({{ paciente_encontrado.sede.ciudad }})</span>
+                </div>
+                <br>
+                <button onclick="alert('Enviando a impresora de etiquetas...')" class="btn-primary" style="background-color: #198754;">🖨️ Imprimir Rótulo</button>
+            </div>
+        </div>
+
+        {% else %}
+        <div class="card">
+            <h3>🏥 Registrar Nuevo Paciente</h3>
+            <form action="/admision/registrar_paciente" method="post">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div><label>Nombres:</label><input type="text" name="nombres" class="form-control" required></div>
+                    <div><label>Apellidos:</label><input type="text" name="apellidos" class="form-control" required></div>
+                    <div>
+                        <label>Tipo Doc:</label>
+                        <select name="tipo_doc" class="form-control">
+                            <option value="CC">Cédula Ciudadanía</option>
+                            <option value="TI">Tarjeta Identidad</option>
+                        </select>
+                    </div>
+                    <div><label>Num Documento:</label><input type="text" name="num_doc" class="form-control" required></div>
+                    <div><label>Fecha Nacimiento:</label><input type="date" name="fecha_nac" class="form-control" required></div>
+                    <div>
+                        <label>Género:</label>
+                        <select name="genero" class="form-control"><option value="M">Masculino</option><option value="F">Femenino</option></select>
+                    </div>
+                    <div><label>Password:</label><input type="password" name="password" value="12345" class="form-control" required></div>
+                </div>
+                <br>
+                <button type="submit" class="btn-primary">Registrar</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

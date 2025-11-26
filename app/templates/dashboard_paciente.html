@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Portal Paciente - HCE</title>
+    <style>
+        /* --- ESTILOS GENERALES --- */
+        :root {
+            --primary: #0d6efd;
+            --secondary: #6c757d;
+            --success: #198754;
+            --danger: #dc3545;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --card-bg: #ffffff;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            color: var(--dark);
+        }
+
+        /* --- BARRA DE NAVEGACIÓN (HEADER) --- */
+        .navbar {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .navbar-brand {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: var(--secondary);
+            margin-right: 10px;
+        }
+
+        /* Botón Mis Datos */
+        .btn-profile {
+            background-color: #e7f1ff;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-profile:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* Botón Cerrar Sesión */
+        .btn-logout {
+            background-color: transparent;
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 8px 16px;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        /* --- CONTENEDOR PRINCIPAL --- */
+        .container {
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        /* --- TARJETA DE BIENVENIDA --- */
+        .welcome-card {
+            background: linear-gradient(135deg, var(--primary), #0a58ca);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-download {
+            background-color: white;
+            color: var(--primary);
+            padding: 12px 25px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        
+        .btn-download:hover {
+            transform: translateY(-2px);
+            background-color: #f8f9fa;
+        }
+
+        /* --- LÍNEA DE TIEMPO (TIMELINE) --- */
+        .timeline {
+            position: relative;
+            padding-left: 30px;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: #dfe6ed;
+            border-radius: 2px;
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: -38px;
+            top: 15px;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border: 4px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px var(--primary);
+        }
+        .card-visit {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 5px solid var(--primary);
+            transition: transform 0.2s;
+        }
+        .card-visit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .visit-header {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .visit-date {
+            font-size: 0.9rem;
+            color: var(--secondary);
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .visit-diagnosis {
+            font-size: 1.2rem;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+        }
+        .vital-item {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        .vital-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px;
+            color: var(--secondary);
+        }
+
+        /* --- ESTILOS DEL MODAL (VENTANA EMERGENTE) --- */
+        .modal {
+            display: none; /* Oculto por defecto */
+            position: fixed; 
+            z-index: 2000; 
+            left: 0;
+            top: 0;
+            width: 100%; 
+            height: 100%; 
+            overflow: auto; 
+            background-color: rgba(0,0,0,0.5); /* Fondo negro semitransparente */
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto; 
+            padding: 25px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close-btn:hover { color: black; }
+
+        .profile-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        .profile-table td { padding: 10px; border-bottom: 1px solid #eee; }
+        .profile-label { font-weight: bold; color: var(--secondary); width: 40%; }
+        
+        @keyframes fadeIn {
+            from {opacity: 0} 
+            to {opacity: 1}
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="navbar-brand">
+            🏥 HCE Interoperable
+        </div>
+        <div class="user-actions">
+            <span class="user-name">Hola, {{ user.nombres }}</span>
+            <button onclick="abrirModal()" class="btn-profile">👤 Mis Datos</button>
+            <a href="/logout" class="btn-logout">Cerrar Sesión</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <div class="welcome-card">
+            <div>
+                <h2 style="margin: 0;">Mi Historia Clínica</h2>
+                <p style="margin: 5px 0 0 0; opacity: 0.9;">Consulte sus atenciones médicas ordenadas cronológicamente.</p>
+            </div>
+            <div>
+                <a href="/exportar_pdf" class="btn-download">
+                    📥 Descargar PDF
+                </a>
+            </div>
+        </div>
+
+        <div class="timeline">
+            {% for visita in historial_paciente %}
+            <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                
+                <div class="card-visit">
+                    <div class="visit-header">
+                        <div class="visit-diagnosis">
+                            🩺 {{ visita.diagnostico }}
+                        </div>
+                        <div class="visit-date">
+                            📅 {{ visita.fecha }}
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                        
+                        <div style="background-color: #e7f1ff; padding: 10px; border-radius: 8px; border-left: 4px solid #0d6efd;">
+                            <strong style="color: #0d6efd; display: block; font-size: 0.85em; margin-bottom: 5px;">💊 TRATAMIENTO / PLAN:</strong>
+                            <span style="font-size: 1em;">{{ visita.tratamiento }}</span>
+                        </div>
+
+                        {% if visita.observaciones %}
+                        <div style="background-color: #fff3cd; padding: 10px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                            <strong style="color: #856404; display: block; font-size: 0.85em; margin-bottom: 5px;">📝 DIAGNÓSTICO:</strong>
+                            <span style="font-size: 0.95em; font-style: italic;">"{{ visita.observaciones }}"</span>
+                        </div>
+                        {% endif %}
+
+                        <div>
+                            <p style="margin: 5px 0 10px 0; font-size: 0.85em; font-weight: bold; color: #666; text-transform: uppercase;">
+                                💓 Signos Vitales:
+                            </p>
+                            
+                            {% if visita.signos_vitales %}
+                            <div class="vitals-grid">
+                                {% for signo in visita.signos_vitales %}
+                                <div class="vital-item">
+                                    <span class="vital-value">{{ signo }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            {% else %}
+                            <span style="font-size: 0.9em; color: #aaa;">No registrados</span>
+                            {% endif %}
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <h3>No hay registros médicos disponibles.</h3>
+                <p>Cuando un médico registre una atención, aparecerá aquí automáticamente.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div id="miModalDatos" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="cerrarModal()">&times;</span>
+            <h2 style="color: var(--primary); margin-top: 0;">👤 Mis Datos Personales</h2>
+            <p style="color: #666; font-size: 0.9em;">Información registrada en la Base de Datos y Servidor FHIR.</p>
+            
+            <table class="profile-table">
+                <tr>
+                    <td class="profile-label">Nombre Completo:</td>
+                    <td>{{ user.nombres }} {{ user.apellidos }}</td>
+                </tr>
+                <tr>
+                    <td class="profile-label">Documento:</td>
+                    <td>{{ user.tipo_documento.prefijo }} - {{ user.numero_documento }}</td>
+                </tr>
+                <tr>
+                    <td class="profile-label">Fecha Nacimiento:</td>
+                    <td>{{ user.fecha_nacimiento }}</td>
+                </tr>
+                <tr>
+                    <td class="profile-label">Género:</td>
+                    <td>{{ user.genero }}</td>
+                </tr>
+                <tr>
+                    <td class="profile-label">Correo Electrónico:</td>
+                    <td>{{ user.email or 'No registrado' }}</td>
+                </tr>
+                <tr>
+                    <td class="profile-label">Sede de Registro:</td>
+                    <td>{{ user.sede.ciudad }} ({{ user.sede.nombre }})</td>
+                </tr>
+            </table>
+            
+            <div style="margin-top: 20px; text-align: center;">
+                <button onclick="cerrarModal()" class="btn-profile" style="background: var(--secondary); color: white; border: none;">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Obtener el modal
+        var modal = document.getElementById("miModalDatos");
+
+        // Funciones para abrir y cerrar
+        function abrirModal() {
+            modal.style.display = "block";
+        }
+
+        function cerrarModal() {
+            modal.style.display = "none";
+        }
+
+        // Cerrar si se hace clic fuera del contenido
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+    </script>
+
+</body>
+</html>

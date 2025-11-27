@@ -2,9 +2,10 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Médico - HCE</title>
     <style>
-        /* --- ESTILOS COMPARTIDOS (Mismo Look & Feel del Paciente) --- */
+
         :root {
             --primary: #0d6efd;
             --secondary: #6c757d;
@@ -83,6 +84,146 @@
             display: inline-block; background: #e2e3e5; padding: 2px 8px; 
             border-radius: 4px; font-size: 0.85em; margin-right: 5px; margin-top: 5px;
         }
+
+        /* BARRA DE BÚSQUEDA*/
+        .search-card {
+            background: #e7f1ff;
+            padding: 16px 24px;
+            margin: 0 auto 20px auto;
+            max-width: 900px;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search-label {
+            font-weight: bold;
+            white-space: nowrap;
+            margin: 0;
+            font-size: 1rem;
+        }
+
+        .search-input {
+            width: 280px;
+            padding: 8px 12px;
+            margin: 0;
+            height: auto;
+        }
+
+        .btn-search {
+            padding: 8px 20px;
+            height: auto;
+            white-space: nowrap;
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 992px) {
+            .medical-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .search-card {
+                max-width: 100%;
+            }
+
+            .search-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-label {
+                text-align: center;
+            }
+
+            .search-input {
+                width: 100%;
+            }
+
+            .btn-search {
+                width: 100%;
+            }
+
+            .navbar {
+                padding: 10px 15px;
+                flex-wrap: wrap;
+            }
+
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+
+            .user-name {
+                font-size: 0.85rem;
+                margin-right: 8px;
+            }
+
+            .btn-logout {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+
+            .container {
+                padding: 0 15px;
+                margin: 20px auto;
+            }
+
+            .card {
+                padding: 15px;
+            }
+
+            .form-control {
+                font-size: 0.9rem;
+            }
+
+            .btn-primary, .btn-search {
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+
+            .timeline {
+                padding-left: 20px;
+            }
+
+            .timeline-dot {
+                left: -21px;
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar-brand {
+                font-size: 1rem;
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            .container {
+                padding: 0 10px;
+            }
+
+            .card h3 {
+                font-size: 1rem;
+            }
+
+            .history-card {
+                padding: 10px;
+            }
+
+            .vital-tag {
+                font-size: 0.75em;
+                padding: 2px 6px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -103,10 +244,10 @@
         </div>
         {% endif %}
 
-        <div class="card" style="display: flex; gap: 10px; align-items: center; background: #e7f1ff;">
-            <form action="/medico/buscar_paciente" method="get" style="display: flex; gap: 10px; width: 100%;">
-                <label style="align-self: center; font-weight: bold;">🔍 Buscar Paciente:</label>
-                <input type="text" name="q_doc" class="form-control" placeholder="Número de Documento (Ej: 3003)" value="{{ paciente_actual.numero_documento if paciente_actual else '' }}" required>
+        <div class="card search-card">
+            <form action="/medico/buscar_paciente" method="get" class="search-form">
+                <label class="search-label">🔍 Buscar Paciente:</label>
+                <input type="text" name="q_doc" class="form-control search-input" placeholder="Número de Documento (Ej: 3003)" value="{{ paciente_actual.numero_documento if paciente_actual else '' }}" required>
                 <button type="submit" class="btn-primary btn-search">Cargar Antecedentes</button>
             </form>
         </div>
@@ -160,7 +301,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn-primary">Guardar e Interoperar (FHIR)</button>
+                    <button type="submit" class="btn-primary">Guardar</button>
                 </form>
             </div>
 

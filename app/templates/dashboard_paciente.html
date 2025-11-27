@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Paciente - HCE</title>
     <style>
         /* --- ESTILOS GENERALES --- */
@@ -252,6 +253,112 @@
         @keyframes fadeIn {
             from {opacity: 0} 
             to {opacity: 1}
+        }
+
+        /* RESPONSIVE DESIGN */
+        @media (max-width: 768px) {
+            .navbar {
+                padding: 10px 15px;
+                flex-wrap: wrap;
+            }
+
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+
+            .user-actions {
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+            .user-name {
+                font-size: 0.85rem;
+                margin-right: 5px;
+            }
+
+            .btn-profile, .btn-logout {
+                padding: 6px 12px;
+                font-size: 0.8rem;
+            }
+
+            .container {
+                padding: 0 15px;
+                margin: 20px auto;
+            }
+
+            .welcome-card {
+                flex-direction: column;
+                text-align: center;
+                padding: 20px;
+                gap: 15px;
+            }
+
+            .welcome-card h2 {
+                font-size: 1.3rem;
+            }
+
+            .visit-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .visit-date {
+                font-size: 0.8rem;
+            }
+
+            .vitals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .timeline::before {
+                left: 10px;
+            }
+
+            .timeline {
+                padding-left: 30px;
+            }
+
+            .timeline-dot {
+                left: 3px;
+                width: 12px;
+                height: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .navbar-brand {
+                font-size: 1rem;
+            }
+
+            .user-name {
+                display: none;
+            }
+
+            .container {
+                padding: 0 10px;
+            }
+
+            .welcome-card {
+                padding: 15px;
+            }
+
+            .welcome-card h2 {
+                font-size: 1.1rem;
+            }
+
+            .btn-download {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            .card-visit {
+                padding: 12px;
+            }
+
+            .visit-diagnosis {
+                font-size: 1rem;
+            }
         }
     </style>
 </head>

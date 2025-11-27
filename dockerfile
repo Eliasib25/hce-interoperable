@@ -3,12 +3,7 @@ FROM python:3.12-slim
 
 # Establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
-
-## ---------------- Dependencias del sistema necesarias ----------------
-# Para xhtml2pdf / svglib / pycairo y WeasyPrint se requieren librerías nativas:
-# - gcc, pkg-config, libcairo2-dev, libffi-dev, libjpeg-dev, zlib1g-dev
-# - libpango-1.0-0, libgdk-pixbuf-2.0-0 (renderizado de texto y fuentes)
-# - curl para healthchecks
+# Instala dependencias del sistema necesarias para la aplicación
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc pkg-config libcairo2-dev libffi-dev libjpeg-dev zlib1g-dev \
     libpango-1.0-0 libgdk-pixbuf-2.0-0 curl && \
@@ -22,7 +17,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# Copia todo el código fuente de la aplicación (la carpeta 'app')
+# Se copia la carpeta de la aplicación al contenedor
 COPY ./app /app/app
 
 # Expone el puerto que usa Uvicorn

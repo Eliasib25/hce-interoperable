@@ -63,10 +63,7 @@ class EncuentroMedico(Base):
     id = Column(Integer, primary_key=True, index=True)
     fecha = Column(DateTime(timezone=True), server_default=func.now())
     diagnostico = Column(String, nullable=False)
-    
-    # --- NUEVO CAMPO AGREGADO ---
-    observaciones_generales = Column(String, nullable=True) 
-    # ----------------------------
+    observaciones_generales = Column(String, nullable=True)
 
     # ... (el resto de relaciones sigue igual: tipo_id, sede_id, etc.)
     tipo_id = Column(Integer, ForeignKey("tipos_encuentro.id"), nullable=False)

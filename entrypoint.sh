@@ -20,7 +20,7 @@ python -m app.init_db
 FHIR_URL="http://${FHIR_HOST}:${FHIR_PORT}/fhir"
 
 # Esperar a que HAPI FHIR esté listo
-echo "⏳ Esperando a que servidor FHIR esté listo en ${FHIR_URL}..."
+echo "⏳ Esperando a que servidor FHIR esté listo en ${FHIR_URL}...."
 max_attempts=100
 attempt=0
 until curl -s "${FHIR_URL}/metadata" > /dev/null 2>&1; do

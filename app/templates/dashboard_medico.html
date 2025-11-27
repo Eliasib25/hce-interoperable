@@ -107,7 +107,7 @@
             <form action="/medico/buscar_paciente" method="get" style="display: flex; gap: 10px; width: 100%;">
                 <label style="align-self: center; font-weight: bold;">🔍 Buscar Paciente:</label>
                 <input type="text" name="q_doc" class="form-control" placeholder="Número de Documento (Ej: 3003)" value="{{ paciente_actual.numero_documento if paciente_actual else '' }}" required>
-                <button type="submit" class="btn-primary btn-search">Cargar Historia</button>
+                <button type="submit" class="btn-primary btn-search">Cargar Antecedentes</button>
             </form>
         </div>
 
@@ -167,36 +167,68 @@
             <div>
                 {% if paciente_actual %}
                     <div class="card">
-                        <h3>🕒 Visualización cronológica de historia Clínica: {{ paciente_actual.nombres }} {{ paciente_actual.apellidos }}</h3>
+                        <h3>📋 Antecedentes Clínicos: {{ paciente_actual.nombres }} {{ paciente_actual.apellidos }}</h3>
                         
                         <div class="timeline">
                             {% for visita in historial_clinico %}
                             <div class="timeline-item">
                                 <div class="timeline-dot"></div>
                                 <div class="history-card">
-                                    <div class="history-date">{{ visita.fecha }}</div>
-                                    <div class="history-diag">{{ visita.diagnostico }}</div>
-                                    
-                                    {% if visita.signos_vitales %}
-                                    <div style="margin-top: 8px;">
-                                        {% for signo in visita.signos_vitales %}
-                                            <span class="vital-tag">💓 {{ signo }}</span>
-                                        {% endfor %}
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 2px solid #dee2e6; padding-bottom: 8px;">
+                                        <div style="font-weight: bold; font-size: 1.1em; color: #0d6efd;">
+                                            📋 {{ visita.tipo_encuentro }}
+                                        </div>
+                                        <div style="font-size: 0.85em; color: #666;">
+                                            📅 {{ visita.fecha }} | 🏥 {{ visita.sede }}
+                                        </div>
                                     </div>
-                                    {% endif %}
+
+                                    <div style="background-color: #f8f9fa; padding: 6px 10px; border-radius: 6px; margin-bottom: 10px; font-size: 0.9em; color: #495057;">
+                                        <strong>Médico:</strong> Dr(a). {{ visita.medico }}
+                                    </div>
+
+                                    <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                                        
+                                        <div style="background-color: #ffe6e6; padding: 8px; border-radius: 6px; border-left: 3px solid #dc3545;">
+                                            <strong style="color: #dc3545; display: block; font-size: 0.8em; margin-bottom: 3px;">🩺 DIAGNÓSTICO:</strong>
+                                            <span style="font-size: 0.95em; font-weight: 500;">{{ visita.diagnostico }}</span>
+                                        </div>
+
+                                        <div style="background-color: #e7f1ff; padding: 8px; border-radius: 6px; border-left: 3px solid #0d6efd;">
+                                            <strong style="color: #0d6efd; display: block; font-size: 0.8em; margin-bottom: 3px;">💊 TRATAMIENTO:</strong>
+                                            <span style="font-size: 0.95em;">{{ visita.tratamiento }}</span>
+                                        </div>
+
+                                        {% if visita.observaciones %}
+                                        <div style="background-color: #fff3cd; padding: 8px; border-radius: 6px; border-left: 3px solid #ffc107;">
+                                            <strong style="color: #856404; display: block; font-size: 0.8em; margin-bottom: 3px;">📝 OBSERVACIONES:</strong>
+                                            <span style="font-size: 0.9em; font-style: italic;">"{{ visita.observaciones }}"</span>
+                                        </div>
+                                        {% endif %}
+
+                                        {% if visita.signos_vitales %}
+                                        <div style="margin-top: 5px;">
+                                            <p style="margin: 0 0 5px 0; font-size: 0.8em; font-weight: bold; color: #666;">💓 SIGNOS VITALES:</p>
+                                            <div>
+                                                {% for signo in visita.signos_vitales %}
+                                                <span class="vital-tag">{{ signo }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                             {% else %}
-                            <p style="text-align: center; color: #888;">El paciente no tiene atenciones previas registradas en FHIR.</p>
+                            <p style="text-align: center; color: #888; padding: 30px;">El paciente no tiene atenciones previas registradas.</p>
                             {% endfor %}
                         </div>
                     </div>
                 {% else %}
                     <div class="card" style="text-align: center; padding: 50px; color: #aaa;">
-                        <div style="font-size: 3rem; margin-bottom: 10px;">🩺</div>
-                        <h3>Módulo de Consulta</h3>
-                        <p>Ingrese el documento del paciente arriba para visualizar sus antecedentes cronológicos.</p>
-                        
+                        <div style="font-size: 3rem; margin-bottom: 10px;">📋</div>
+                        <h3>Módulo de Antecedentes</h3>
+                        <p>Ingrese el documento del paciente arriba para visualizar sus antecedentes clínicos.</p>
                     </div>
                 {% endif %}
             </div>

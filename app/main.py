@@ -95,71 +95,55 @@ def dashboard(request: Request, db: Session = Depends(get_db)):
     if rol == "Medico":
         return templates.TemplateResponse("dashboard_medico.html", context)
     elif rol == "Paciente":
-        # 1. Obtener datos FHIR
-        observaciones_fhir = fhir_client.get_patient_observations(user.numero_documento)
-        encuentros_fhir = fhir_client.get_patient_encounters(user.numero_documento)
+        # Obtener encuentros médicos desde la base de datos local
+        encuentros_db = db.query(models.EncuentroMedico).filter(
+            models.EncuentroMedico.paciente_id == user.id
+        ).order_by(models.EncuentroMedico.fecha.desc()).all()
         
         historial_agrupado = []
 
-        # 2. Recorremos los ENCUENTROS
-        for entry_enc in encuentros_fhir:
-            enc_res = entry_enc.get('resource', {})
-            enc_id = enc_res.get('id')
-            fecha_str = enc_res.get('meta', {}).get('lastUpdated', 'N/A')[:10]
+        for encuentro in encuentros_db:
+            # Extraer diagnóstico completo que puede contener: "Enfermedad | Tx: ... | Obs: ..."
+            texto_completo = encuentro.diagnostico
             
-            # --- LÓGICA DE SEPARACIÓN DE TEXTO ---
-            try:
-                # Texto completo: "Gripa | Tx: Tomar agua | Obs: Reposo"
-                texto_completo = enc_res.get('reasonCode', [{}])[0].get('coding', [{}])[0].get('display', 'Consulta General')
-            except:
-                texto_completo = "Sin Diagnóstico"
-
             # Valores por defecto
             diag_final = texto_completo
             tx_final = "No especificado"
             obs_final = ""
 
-            # Separamos por el delimitador que usamos al guardar
+            # Separar las partes del diagnóstico
             if " | " in texto_completo:
                 partes = texto_completo.split(" | ")
+                diag_final = partes[0]  # Primera parte es el diagnóstico
                 
-                # La primera parte siempre es el Diagnóstico
-                diag_final = partes[0]
-                
-                # Buscamos las otras partes
                 for parte in partes[1:]:
                     if parte.startswith("Tx: "):
                         tx_final = parte.replace("Tx: ", "")
                     elif parte.startswith("Obs: "):
                         obs_final = parte.replace("Obs: ", "")
-            # -------------------------------------
 
-            # 3. Buscar Signos Vitales
-            ref_buscada = f"Encounter/{enc_id}"
-            signos_vitales_asociados = []
+            # Obtener observaciones clínicas (signos vitales) asociadas al encuentro
+            observaciones = db.query(models.ObservacionClinica).filter(
+                models.ObservacionClinica.encuentro_id == encuentro.id
+            ).all()
             
-            for entry_obs in observaciones_fhir:
-                obs_res = entry_obs.get('resource', {})
-                ref_obs = obs_res.get('encounter', {}).get('reference', '')
-                
-                if ref_obs == ref_buscada:
-                    try:
-                        n_obs = obs_res.get('code', {}).get('coding', [{}])[0].get('display', 'Obs')
-                    except:
-                        n_obs = "Obs"
-                    v = obs_res.get('valueQuantity', {}).get('value') or obs_res.get('valueString', '')
-                    u = obs_res.get('valueQuantity', {}).get('unit', '')
-                    signos_vitales_asociados.append(f"{n_obs}: {v} {u}")
+            signos_vitales = []
+            for obs in observaciones:
+                signo = f"{obs.descripcion}: {obs.valor}"
+                if obs.unidad:
+                    signo += f" {obs.unidad}"
+                signos_vitales.append(signo)
 
             historial_agrupado.append({
-                "fecha": fecha_str,
-                "diagnostico": diag_final,   # Solo el nombre de la enfermedad
-                "tratamiento": tx_final,     # Solo el tratamiento
-                "observaciones": obs_final,  # Solo la observación
-                "signos_vitales": signos_vitales_asociados
+                "fecha": encuentro.fecha.strftime("%Y-%m-%d %H:%M"),
+                "sede": f"{encuentro.sede.nombre} - {encuentro.sede.ciudad}",
+                "tipo_encuentro": encuentro.tipo.nombre,
+                "medico": f"{encuentro.medico.nombres} {encuentro.medico.apellidos}",
+                "diagnostico": diag_final,
+                "tratamiento": tx_final,
+                "observaciones": obs_final,
+                "signos_vitales": signos_vitales
             })
-
-        historial_agrupado.sort(key=lambda x: x['fecha'], reverse=True)
             
         context["historial_paciente"] = historial_agrupado
         return templates.TemplateResponse("dashboard_paciente.html", context)
@@ -238,42 +222,55 @@ def registrar_atencion(
     except Exception as e:
         status_fhir = f"⚠️ Error conexión FHIR: {str(e)}"
 
-    # 6. --- RECARGAR HISTORIAL ---
-    # (Copiar aquí la misma lógica de recarga de historial que tenías antes)
-    observaciones_fhir = fhir_client.get_patient_observations(paciente.numero_documento)
-    encuentros_fhir = fhir_client.get_patient_encounters(paciente.numero_documento)
+    # 6. --- RECARGAR HISTORIAL DESDE BASE DE DATOS ---
+    encuentros_db = db.query(models.EncuentroMedico).filter(
+        models.EncuentroMedico.paciente_id == paciente.id
+    ).order_by(models.EncuentroMedico.fecha.desc()).all()
     
     historial_agrupado = []
-    
-    for entry_enc in encuentros_fhir:
-        enc_res = entry_enc.get('resource', {})
-        enc_id = enc_res.get('id')
-        fecha_str = enc_res.get('meta', {}).get('lastUpdated', 'N/A')[:10]
-        try:
-            diag_txt = enc_res.get('reasonCode', [{}])[0].get('coding', [{}])[0].get('display', 'Consulta')
-        except:
-            diag_txt = "Sin Diagnóstico"
 
-        ref_buscada = f"Encounter/{enc_id}"
-        signos = []
-        for entry_obs in observaciones_fhir:
-            obs_res = entry_obs.get('resource', {})
-            if obs_res.get('encounter', {}).get('reference') == ref_buscada:
-                try:
-                    n_obs = obs_res.get('code', {}).get('coding', [{}])[0].get('display', 'Obs')
-                except:
-                    n_obs = "Obs"
-                v = obs_res.get('valueQuantity', {}).get('value') or obs_res.get('valueString', '')
-                u = obs_res.get('valueQuantity', {}).get('unit', '')
-                signos.append(f"{n_obs}: {v} {u}")
+    for encuentro in encuentros_db:
+        # Extraer diagnóstico completo
+        texto_completo = encuentro.diagnostico
+        
+        # Valores por defecto
+        diag_final = texto_completo
+        tx_final = "No especificado"
+        obs_final = ""
+
+        # Separar las partes del diagnóstico
+        if " | " in texto_completo:
+            partes = texto_completo.split(" | ")
+            diag_final = partes[0]
+            
+            for parte in partes[1:]:
+                if parte.startswith("Tx: "):
+                    tx_final = parte.replace("Tx: ", "")
+                elif parte.startswith("Obs: "):
+                    obs_final = parte.replace("Obs: ", "")
+
+        # Obtener observaciones clínicas (signos vitales)
+        observaciones = db.query(models.ObservacionClinica).filter(
+            models.ObservacionClinica.encuentro_id == encuentro.id
+        ).all()
+        
+        signos_vitales = []
+        for obs in observaciones:
+            signo = f"{obs.descripcion}: {obs.valor}"
+            if obs.unidad:
+                signo += f" {obs.unidad}"
+            signos_vitales.append(signo)
 
         historial_agrupado.append({
-            "fecha": fecha_str,
-            "diagnostico": diag_txt,
-            "signos_vitales": signos
+            "fecha": encuentro.fecha.strftime("%Y-%m-%d %H:%M"),
+            "sede": f"{encuentro.sede.nombre} - {encuentro.sede.ciudad}",
+            "tipo_encuentro": encuentro.tipo.nombre,
+            "medico": f"{encuentro.medico.nombres} {encuentro.medico.apellidos}",
+            "diagnostico": diag_final,
+            "tratamiento": tx_final,
+            "observaciones": obs_final,
+            "signos_vitales": signos_vitales
         })
-
-    historial_agrupado.sort(key=lambda x: x['fecha'], reverse=True)
 
     context["msg"] = f"✅ Registro guardado para {paciente.nombres}. ({status_fhir})"
     context["paciente_actual"] = paciente
@@ -304,47 +301,55 @@ def medico_buscar_paciente(
         context["msg"] = f"⚠️ Paciente con documento {q_doc} no encontrado en la base de datos."
         return templates.TemplateResponse("dashboard_medico.html", context)
     
-    # 2. Si existe, traemos su HISTORIA CLÍNICA FHIR (Reusamos la lógica del paciente)
-    observaciones_fhir = fhir_client.get_patient_observations(paciente.numero_documento)
-    encuentros_fhir = fhir_client.get_patient_encounters(paciente.numero_documento)
+    # 2. Si existe, traemos sus ANTECEDENTES desde la base de datos local
+    encuentros_db = db.query(models.EncuentroMedico).filter(
+        models.EncuentroMedico.paciente_id == paciente.id
+    ).order_by(models.EncuentroMedico.fecha.desc()).all()
     
     historial_agrupado = []
 
-    # Procesar Encuentros
-    for entry_enc in encuentros_fhir:
-        enc_res = entry_enc.get('resource', {})
-        enc_id = enc_res.get('id')
-        fecha_str = enc_res.get('meta', {}).get('lastUpdated', 'N/A')[:10]
+    for encuentro in encuentros_db:
+        # Extraer diagnóstico completo
+        texto_completo = encuentro.diagnostico
         
-        try:
-            diagnostico = enc_res.get('reasonCode', [{}])[0].get('coding', [{}])[0].get('display', 'Consulta General')
-        except:
-            diagnostico = "Sin Diagnóstico"
+        # Valores por defecto
+        diag_final = texto_completo
+        tx_final = "No especificado"
+        obs_final = ""
 
-        # Buscar signos vitales de este encuentro
-        referencia_buscada = f"Encounter/{enc_id}"
-        signos_vitales_asociados = []
-        
-        for entry_obs in observaciones_fhir:
-            obs_res = entry_obs.get('resource', {})
-            ref_obs = obs_res.get('encounter', {}).get('reference', '')
+        # Separar las partes del diagnóstico
+        if " | " in texto_completo:
+            partes = texto_completo.split(" | ")
+            diag_final = partes[0]
             
-            if ref_obs == referencia_buscada:
-                try:
-                    nombre_obs = obs_res.get('code', {}).get('coding', [{}])[0].get('display', 'Obs')
-                except:
-                    nombre_obs = "Observación"
-                val = obs_res.get('valueQuantity', {}).get('value') or obs_res.get('valueString', 'N/A')
-                unit = obs_res.get('valueQuantity', {}).get('unit', '')
-                signos_vitales_asociados.append(f"{nombre_obs}: {val} {unit}")
+            for parte in partes[1:]:
+                if parte.startswith("Tx: "):
+                    tx_final = parte.replace("Tx: ", "")
+                elif parte.startswith("Obs: "):
+                    obs_final = parte.replace("Obs: ", "")
+
+        # Obtener observaciones clínicas (signos vitales)
+        observaciones = db.query(models.ObservacionClinica).filter(
+            models.ObservacionClinica.encuentro_id == encuentro.id
+        ).all()
+        
+        signos_vitales = []
+        for obs in observaciones:
+            signo = f"{obs.descripcion}: {obs.valor}"
+            if obs.unidad:
+                signo += f" {obs.unidad}"
+            signos_vitales.append(signo)
 
         historial_agrupado.append({
-            "fecha": fecha_str,
-            "diagnostico": diagnostico,
-            "signos_vitales": signos_vitales_asociados
+            "fecha": encuentro.fecha.strftime("%Y-%m-%d %H:%M"),
+            "sede": f"{encuentro.sede.nombre} - {encuentro.sede.ciudad}",
+            "tipo_encuentro": encuentro.tipo.nombre,
+            "medico": f"{encuentro.medico.nombres} {encuentro.medico.apellidos}",
+            "diagnostico": diag_final,
+            "tratamiento": tx_final,
+            "observaciones": obs_final,
+            "signos_vitales": signos_vitales
         })
-
-    historial_agrupado.sort(key=lambda x: x['fecha'], reverse=True)
 
     # Enviamos los datos al template
     context["paciente_actual"] = paciente
@@ -443,12 +448,30 @@ def exportar_pdf(request: Request, db: Session = Depends(get_db)):
     
     encuentros_data = []
     for enc in encuentros:
+        # Separar el diagnóstico completo en sus partes
+        texto_completo = enc.diagnostico
+        diag_final = texto_completo
+        tx_final = "No especificado"
+        obs_final = ""
+
+        if " | " in texto_completo:
+            partes = texto_completo.split(" | ")
+            diag_final = partes[0]
+            
+            for parte in partes[1:]:
+                if parte.startswith("Tx: "):
+                    tx_final = parte.replace("Tx: ", "")
+                elif parte.startswith("Obs: "):
+                    obs_final = parte.replace("Obs: ", "")
+
         encuentros_data.append({
             "fecha": enc.fecha.strftime("%Y-%m-%d %H:%M"),
             "tipo": enc.tipo.nombre,
             "medico": f"{enc.medico.nombres} {enc.medico.apellidos}",
             "sede": enc.sede.nombre,
-            "diagnostico": enc.diagnostico
+            "diagnostico": diag_final,
+            "tratamiento": tx_final,
+            "observaciones": obs_final
         })
     
     # 2. Obtener Observaciones Clínicas de la BD Local

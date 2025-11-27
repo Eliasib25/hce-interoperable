@@ -108,11 +108,11 @@
     <table>
         <thead>
             <tr>
-                <th>Fecha</th>
-                <th>Tipo</th>
-                <th>Médico</th>
-                <th>Sede</th>
-                <th>Diagnóstico</th>
+                <th width="15%">Fecha</th>
+                <th width="12%">Tipo</th>
+                <th width="18%">Médico</th>
+                <th width="15%">Sede</th>
+                <th width="40%">Detalle Clínico</th>
             </tr>
         </thead>
         <tbody>
@@ -122,7 +122,22 @@
                 <td>{{ enc.tipo }}</td>
                 <td>{{ enc.medico }}</td>
                 <td>{{ enc.sede }}</td>
-                <td>{{ enc.diagnostico }}</td>
+                <td>
+                    <div style="margin-bottom: 8px;">
+                        <strong style="color: #dc3545;">Diagnóstico:</strong><br/>
+                        <span>{{ enc.diagnostico }}</span>
+                    </div>
+                    <div style="margin-bottom: 8px;">
+                        <strong style="color: #0d6efd;">Tratamiento:</strong><br/>
+                        <span>{{ enc.tratamiento }}</span>
+                    </div>
+                    {% if enc.observaciones %}
+                    <div>
+                        <strong style="color: #856404;">Observaciones:</strong><br/>
+                        <span style="font-style: italic;">{{ enc.observaciones }}</span>
+                    </div>
+                    {% endif %}
+                </td>
             </tr>
             {% else %}
             <tr>

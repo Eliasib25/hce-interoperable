@@ -72,6 +72,13 @@ def sync_encounter_to_fhir(encuentro_sql):
                     }
                 ]
             }
+        ],
+        "location": [
+            {
+                "location": {
+                    "display": f"{encuentro_sql.sede.nombre} - {encuentro_sql.sede.ciudad}"
+                }
+            }
         ]
     }
     

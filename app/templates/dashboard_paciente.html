@@ -290,15 +290,24 @@
                 <div class="card-visit">
                     <div class="visit-header">
                         <div class="visit-diagnosis">
-                            🩺 {{ visita.diagnostico }}
+                            📋 {{ visita.tipo_encuentro }}
                         </div>
                         <div class="visit-date">
-                            📅 {{ visita.fecha }}
+                            📅 {{ visita.fecha }} | 🏥 {{ visita.sede }}
                         </div>
+                    </div>
+
+                    <div style="background-color: #f8f9fa; padding: 8px 12px; border-radius: 6px; margin-bottom: 12px; font-size: 0.9em; color: #495057;">
+                        <strong>Médico tratante:</strong> Dr(a). {{ visita.medico }}
                     </div>
 
                     <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
                         
+                        <div style="background-color: #ffe6e6; padding: 10px; border-radius: 8px; border-left: 4px solid #dc3545;">
+                            <strong style="color: #dc3545; display: block; font-size: 0.85em; margin-bottom: 5px;">🩺 DIAGNÓSTICO:</strong>
+                            <span style="font-size: 1em; font-weight: 500;">{{ visita.diagnostico }}</span>
+                        </div>
+
                         <div style="background-color: #e7f1ff; padding: 10px; border-radius: 8px; border-left: 4px solid #0d6efd;">
                             <strong style="color: #0d6efd; display: block; font-size: 0.85em; margin-bottom: 5px;">💊 TRATAMIENTO / PLAN:</strong>
                             <span style="font-size: 1em;">{{ visita.tratamiento }}</span>
@@ -306,7 +315,7 @@
 
                         {% if visita.observaciones %}
                         <div style="background-color: #fff3cd; padding: 10px; border-radius: 8px; border-left: 4px solid #ffc107;">
-                            <strong style="color: #856404; display: block; font-size: 0.85em; margin-bottom: 5px;">📝 DIAGNÓSTICO:</strong>
+                            <strong style="color: #856404; display: block; font-size: 0.85em; margin-bottom: 5px;">📝 OBSERVACIONES:</strong>
                             <span style="font-size: 0.95em; font-style: italic;">"{{ visita.observaciones }}"</span>
                         </div>
                         {% endif %}

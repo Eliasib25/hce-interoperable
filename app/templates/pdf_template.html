@@ -100,9 +100,76 @@
         </tr>
     </table>
 
-    <h2>2. Historial Clínico Unificado (FHIR)</h2>
+    <h2>2. Encuentros Médicos</h2>
     <p style="font-size: 10px; font-style: italic;">
-        Los siguientes datos han sido recuperados y normalizados desde el servidor de interoperabilidad HAPI FHIR.
+        Registro de consultas y atenciones médicas realizadas.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Médico</th>
+                <th>Sede</th>
+                <th>Diagnóstico</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for enc in encuentros %}
+            <tr>
+                <td>{{ enc.fecha }}</td>
+                <td>{{ enc.tipo }}</td>
+                <td>{{ enc.medico }}</td>
+                <td>{{ enc.sede }}</td>
+                <td>{{ enc.diagnostico }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 20px;">
+                    No hay encuentros médicos registrados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>3. Observaciones Clínicas</h2>
+    <p style="font-size: 10px; font-style: italic;">
+        Mediciones y observaciones registradas durante las consultas.
+    </p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Fecha</th>
+                <th>Tipo de Observación</th>
+                <th>Valor</th>
+                <th>Unidad</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for obs in observaciones %}
+            <tr>
+                <td>{{ obs.fecha }}</td>
+                <td>{{ obs.tipo }}</td>
+                <td style="font-weight: bold;">{{ obs.valor }}</td>
+                <td>{{ obs.unidad }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 20px;">
+                    No hay observaciones clínicas registradas.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if historial_fhir %}
+    <h2>4. Datos de Interoperabilidad (FHIR)</h2>
+    <p style="font-size: 10px; font-style: italic;">
+        Los siguientes datos han sido recuperados desde el servidor de interoperabilidad HAPI FHIR.
     </p>
 
     <table>
@@ -115,22 +182,17 @@
             </tr>
         </thead>
         <tbody>
-            {% for obs in historial_paciente %}
+            {% for obs in historial_fhir %}
             <tr>
                 <td>{{ obs.fecha }}</td>
                 <td>{{ obs.tipo }}</td>
                 <td style="font-weight: bold;">{{ obs.valor }}</td>
                 <td>{{ obs.unidad }}</td>
             </tr>
-            {% else %}
-            <tr>
-                <td colspan="4" style="text-align: center; padding: 20px;">
-                    No se encontraron registros clínicos disponibles.
-                </td>
-            </tr>
             {% endfor %}
         </tbody>
     </table>
+    {% endif %}
 
     <div class="footer">
         Este documento es un extracto de la Historia Clínica Electrónica. 

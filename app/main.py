@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException, status, Request, Form
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.security import OAuth2PasswordRequestForm
@@ -425,66 +425,99 @@ def actualizar_paciente(
     
     return templates.TemplateResponse("dashboard_admin.html", context)
 
-# @app.get("/exportar_pdf")
-# def exportar_pdf(request: Request, db: Session = Depends(get_db)):
-#     """
-#     Genera la Historia Clínica en PDF usando xhtml2pdf (Compatible con Windows).
-#     """
-#     user = auth.get_current_user_from_cookie(request, db)
+@app.get("/exportar_pdf")
+def exportar_pdf(request: Request, db: Session = Depends(get_db)):
+    """
+    Genera la Historia Clínica en PDF usando xhtml2pdf (Compatible con Windows).
+    Permite a los pacientes descargar su historia clínica completa.
+    """
+    user = auth.get_current_user_from_cookie(request, db)
     
-#     if not user or user.rol.nombre != "Paciente":
-#         return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+    if not user or user.rol.nombre != "Paciente":
+        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
 
-#     # 1. Obtener Datos FHIR
-#     observaciones_fhir = fhir_client.get_patient_observations(user.numero_documento)
+    # 1. Obtener Encuentros Médicos de la BD Local
+    encuentros = db.query(models.EncuentroMedico).filter(
+        models.EncuentroMedico.paciente_id == user.id
+    ).order_by(models.EncuentroMedico.fecha.desc()).all()
     
-#     historial = []
-#     for entry in observaciones_fhir:
-#         resource = entry.get('resource', {})
-#         fecha_raw = resource.get('meta', {}).get('lastUpdated', 'N/A')
-#         fecha = fecha_raw[:10] if len(fecha_raw) >= 10 else fecha_raw
-        
-#         try:
-#             tipo = resource.get('code', {}).get('coding', [{}])[0].get('display', 'Observación')
-#         except:
-#             tipo = "Observación"
+    encuentros_data = []
+    for enc in encuentros:
+        encuentros_data.append({
+            "fecha": enc.fecha.strftime("%Y-%m-%d %H:%M"),
+            "tipo": enc.tipo.nombre,
+            "medico": f"{enc.medico.nombres} {enc.medico.apellidos}",
+            "sede": enc.sede.nombre,
+            "diagnostico": enc.diagnostico
+        })
+    
+    # 2. Obtener Observaciones Clínicas de la BD Local
+    observaciones_locales = []
+    for enc in encuentros:
+        obs_list = db.query(models.ObservacionClinica).filter(
+            models.ObservacionClinica.encuentro_id == enc.id
+        ).all()
+        for obs in obs_list:
+            observaciones_locales.append({
+                "fecha": enc.fecha.strftime("%Y-%m-%d"),
+                "tipo": obs.descripcion,
+                "valor": obs.valor,
+                "unidad": obs.unidad or ""
+            })
 
-#         valor = resource.get('valueQuantity', {}).get('value') or resource.get('valueString', 'N/A')
-#         unidad = resource.get('valueQuantity', {}).get('unit', '')
+    # 3. Obtener Datos FHIR
+    try:
+        observaciones_fhir = fhir_client.get_patient_observations(user.numero_documento)
+        historial_fhir = []
+        for entry in observaciones_fhir:
+            resource = entry.get('resource', {})
+            fecha_raw = resource.get('meta', {}).get('lastUpdated', 'N/A')
+            fecha = fecha_raw[:10] if len(fecha_raw) >= 10 else fecha_raw
+            
+            try:
+                tipo = resource.get('code', {}).get('coding', [{}])[0].get('display', 'Observación')
+            except:
+                tipo = "Observación"
 
-#         historial.append({
-#             "fecha": fecha, "tipo": tipo, "valor": valor, "unidad": unidad
-#         })
+            valor = resource.get('valueQuantity', {}).get('value') or resource.get('valueString', 'N/A')
+            unidad = resource.get('valueQuantity', {}).get('unit', '')
 
-#     # 2. Preparar Contexto
-#     context = {
-#         "request": request,
-#         "user": user,
-#         "historial_paciente": historial,
-#         "today": date.today().strftime("%Y-%m-%d")
-#     }
-    
-#     # 3. Renderizar HTML
-#     html_content = templates.TemplateResponse("pdf_template.html", context).body.decode("utf-8")
-    
-#     # 4. Generar PDF con xhtml2pdf (pisa)
-#     pdf_file = BytesIO()
-#     pisa_status = pisa.CreatePDF(html_content, dest=pdf_file)
-    
-#     if pisa_status.err:
-#         return HTMLResponse("Error generando PDF", status_code=500)
+            historial_fhir.append({
+                "fecha": fecha, "tipo": tipo, "valor": valor, "unidad": unidad
+            })
+    except:
+        historial_fhir = []
 
-#     pdf_file.seek(0)
+    # 4. Preparar Contexto
+    context = {
+        "request": request,
+        "user": user,
+        "encuentros": encuentros_data,
+        "observaciones": observaciones_locales,
+        "historial_fhir": historial_fhir,
+        "today": date.today().strftime("%Y-%m-%d")
+    }
     
-#     # 5. Enviar al navegador
-#     filename = f"Historia_Clinica_{user.numero_documento}.pdf"
+    # 5. Renderizar HTML
+    html_content = templates.TemplateResponse("pdf_template.html", context).body.decode("utf-8")
     
-#     # Aquí ya no te saldrá el error porque importamos Response arriba
-#     return Response(
-#         content=pdf_file.read(),
-#         media_type="application/pdf",
-#         headers={"Content-Disposition": f"attachment; filename={filename}"}
-#     )
+    # 6. Generar PDF con xhtml2pdf (pisa)
+    pdf_file = BytesIO()
+    pisa_status = pisa.CreatePDF(html_content, dest=pdf_file)
+    
+    if pisa_status.err:
+        return HTMLResponse("Error generando PDF", status_code=500)
+
+    pdf_file.seek(0)
+    
+    # 7. Enviar al navegador para descarga
+    filename = f"Historia_Clinica_{user.numero_documento}.pdf"
+    
+    return Response(
+        content=pdf_file.read(),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 @app.post("/admision/registrar_paciente", response_class=HTMLResponse)
 def registrar_paciente(

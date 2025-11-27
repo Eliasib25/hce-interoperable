@@ -166,34 +166,6 @@
         </tbody>
     </table>
 
-    {% if historial_fhir %}
-    <h2>4. Datos de Interoperabilidad (FHIR)</h2>
-    <p style="font-size: 10px; font-style: italic;">
-        Los siguientes datos han sido recuperados desde el servidor de interoperabilidad HAPI FHIR.
-    </p>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Fecha</th>
-                <th>Concepto (LOINC/SNOMED)</th>
-                <th>Resultado</th>
-                <th>Unidad</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for obs in historial_fhir %}
-            <tr>
-                <td>{{ obs.fecha }}</td>
-                <td>{{ obs.tipo }}</td>
-                <td style="font-weight: bold;">{{ obs.valor }}</td>
-                <td>{{ obs.unidad }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% endif %}
-
     <div class="footer">
         Este documento es un extracto de la Historia Clínica Electrónica. 
         La información aquí contenida es confidencial y está protegida por leyes de privacidad de datos.

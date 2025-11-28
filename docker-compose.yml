@@ -25,7 +25,6 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Configuración básica para desarrollo (H2 db en memoria por defecto en esta imagen)
       hapi.fhir.allow_multiple_delete: "true"
       hapi.fhir.allow_external_references: "true"
     depends_on:

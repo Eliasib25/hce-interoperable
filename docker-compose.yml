@@ -51,10 +51,6 @@ services:
         condition: service_healthy
       hapifhir:
         condition: service_started
-    
-    # Si necesitas montar recursos estáticos o plantillas desde el host, agrega volúmenes aquí
-    # volumes:
-    #   - ./app:/app/app:ro
-
+        
 volumes:
   citus_data:

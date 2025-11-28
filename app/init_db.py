@@ -60,6 +60,7 @@ def init_db():
         
         sede_bog = db.query(models.Sede).filter_by(ciudad="Bogotá").first()
         sede_med = db.query(models.Sede).filter_by(ciudad="Medellín").first()
+        sede_cali = db.query(models.Sede).filter_by(ciudad="Cali").first()
         doc_cc = db.query(models.TipoDocumento).filter_by(prefijo="CC").first()
         
         # Generar hash de contraseña una sola vez con contraseña corta y simple
@@ -97,6 +98,19 @@ def init_db():
                 nombres="Andres", apellidos="Martinez", tipo_documento_id=doc_cc.id,
                 numero_documento="6006", fecha_nacimiento=datetime.date(1992, 11, 25),
                 genero="M", email="admi.medellin@hce.com", sede_id=sede_med.id, rol_id=rol_admi.id,
+                password_hash=password_generico
+            ),
+            # Usuarios Sede Cali
+            models.Usuario(
+                nombres="Laura", apellidos="Gonzalez", tipo_documento_id=doc_cc.id,
+                numero_documento="7007", fecha_nacimiento=datetime.date(1987, 4, 18),
+                genero="F", email="medico.cali@hce.com", sede_id=sede_cali.id, rol_id=rol_medico.id,
+                password_hash=password_generico
+            ),
+            models.Usuario(
+                nombres="Miguel", apellidos="Torres", tipo_documento_id=doc_cc.id,
+                numero_documento="8008", fecha_nacimiento=datetime.date(1991, 9, 22),
+                genero="M", email="admi.cali@hce.com", sede_id=sede_cali.id, rol_id=rol_admi.id,
                 password_hash=password_generico
             )
         ]

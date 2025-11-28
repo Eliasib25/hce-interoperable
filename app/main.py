@@ -26,6 +26,13 @@ app = FastAPI(title="HCE Interoperable")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
+# --- RUTA RAÍZ ---
+
+@app.get("/", response_class=HTMLResponse)
+def root():
+    """Redirige a la página de login"""
+    return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
+
 # --- RUTAS DE API (Backend puro) ---
 
 @app.post("/token", response_model=schemas.Token)

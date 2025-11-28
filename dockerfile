@@ -1,19 +1,19 @@
-# Usa una imagen base oficial de Python
+# Imgen base oficial de Python 3.12 slim
 FROM python:3.12-slim
 
-# Establece el directorio de trabajo dentro del contenedor
+# Se establece el directorio de trabajo dentro del contenedor
 WORKDIR /app
-# Instala dependencias del sistema necesarias para la aplicación
+# Se instalan las dependencias del sistema necesarias para la aplicación
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc pkg-config libcairo2-dev libffi-dev libjpeg-dev zlib1g-dev \
     libpango-1.0-0 libgdk-pixbuf-2.0-0 curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Copia los archivos de requerimientos e instala dependencias Python (cache optimizada)
+# Se copian los archivos de requerimientos e instalan dependencias Python
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copia el script de entrada (entrypoint)
+# Se copia el script de entrada (entrypoint)
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
@@ -23,7 +23,7 @@ COPY ./app /app/app
 # Expone el puerto que usa Uvicorn
 EXPOSE 8000
 
-# Usar entrypoint para ejecutar init_db y sync_fhir antes de uvicorn
+# Se usa el archivo entrypoint para ejecutar init_db y sync_fhir antes de uvicorn
 ENTRYPOINT ["/entrypoint.sh"]
 
 # Comando para correr la aplicación (Modo producción)
